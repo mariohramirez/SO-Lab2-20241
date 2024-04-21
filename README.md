@@ -1,5 +1,9 @@
 # Práctica 2 de laboratorio - API de Procesos #
 
+## Miembros del grupo ##
+
+* MARIO HUMBERTO RAMIREZ, CC 1148697245, Ingenieria de Sistemas
+
 ## Instrucciones ##
 Antes de comenzar a trabajar en esta práctica se recomienda que lleve a cabo los siguientes pasos:
 1. Haga un fork de este repositorio.
