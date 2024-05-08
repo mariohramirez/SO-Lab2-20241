@@ -50,6 +50,7 @@ void execute_exit(char *args) {
 */
 void execute_cd(char *newpath) {
     char *path = strtok_r(newpath, " ", &newpath);
+<<<<<<< HEAD
     if (path == NULL) {
         write(STDERR_FILENO, error_message2, strlen(error_message2));
         return;
@@ -61,6 +62,26 @@ void execute_cd(char *newpath) {
     if (access(path, F_OK) == 0) {
         chdir(path);
     } else {
+=======
+    if (path == NULL)
+    {
+        write(STDERR_FILENO, error_message2, strlen(error_message2));
+        return;
+    }
+
+    if (strtok_r(NULL, " ", &newpath) != NULL)
+    {
+        write(STDERR_FILENO, error_message2, strlen(error_message2));
+        return;
+    }
+
+    if (access(path, F_OK) == 0)
+    {
+        chdir(path);
+    }
+    else
+    {
+>>>>>>> 9683ebd4f0af740acc7fae267221f23e3f45f957
         write(STDERR_FILENO, error_message2, strlen(error_message2));
     }
 }
@@ -85,6 +106,7 @@ void execute_path(char *newpath, char ***mypath) {
         path_count++;
         path = strtok_r(copypath, " ", &copypath);
     }
+<<<<<<< HEAD
     if (path_count == 0) {
         i = 0;
         while (strcmp((*mypath)[i], "") != 0) {
@@ -92,22 +114,59 @@ void execute_path(char *newpath, char ***mypath) {
             i++;
         }
     } else {
+=======
+
+    if (path_count == 0)
+    {
+        i = 0;
+        while (strcmp((*mypath)[i], "") != 0)
+        {
+            (*mypath)[i] = strdup("");
+            i++;
+        }    
+    }
+    else
+    {
+>>>>>>> 9683ebd4f0af740acc7fae267221f23e3f45f957
         *mypath = realloc(*mypath, (path_count + 1) * sizeof(char *));
         path = strtok_r(newpath, " ", &newpath);
         i = 0;
+<<<<<<< HEAD
         while (path != NULL) {
             if (strcmp(path, "bin") == 0 || strcmp(path, "/bin") == 0 || strcmp(path, "/bin/") == 0 || strcmp(path, "./bin") == 0 || strcmp(path, "./bin/") == 0) {
                 (*mypath)[i] = strdup("/bin/");
             } else {
                 if (strstr(path, "./") != path) {
+=======
+        while (path != NULL)
+        {
+            if (strcmp(path, "bin") == 0 || strcmp(path, "/bin") == 0 || strcmp(path, "/bin/") == 0 || strcmp(path, "./bin") == 0 || strcmp(path, "./bin/") == 0)
+            {
+                (*mypath)[i] = strdup("/bin/");
+            }
+            else
+            {
+                if (strstr(path, "./") != path)
+                {
+>>>>>>> 9683ebd4f0af740acc7fae267221f23e3f45f957
                     char *new_path = malloc(strlen(path) + 3);
                     strcpy(new_path, "./");
                     strcat(new_path, path);
                     (*mypath)[i] = new_path;
+<<<<<<< HEAD
                 } else {
                     (*mypath)[i] = strdup(path);
                 }
                 if (path[strlen(path) - 1] != '/') {
+=======
+                }
+                else
+                {
+                    (*mypath)[i] = strdup(path);
+                }
+                if (path[strlen(path) - 1] != '/')
+                {
+>>>>>>> 9683ebd4f0af740acc7fae267221f23e3f45f957
                     strcat((*mypath)[i], "/");
                 }
             }
@@ -135,8 +194,15 @@ int wish_launch_redirect(char **args, char *file) {
     pid = fork();
     if (pid == 0) {
         int fd = open(file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+<<<<<<< HEAD
         dup2(fd, STDOUT_FILENO);
         dup2(fd, STDERR_FILENO);
+=======
+
+        dup2(fd, STDOUT_FILENO);
+        dup2(fd, STDERR_FILENO);
+
+>>>>>>> 9683ebd4f0af740acc7fae267221f23e3f45f957
         close(fd);
         execv(args[0], args);
     } else if (pid < 0) {
