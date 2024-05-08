@@ -1,3 +1,9 @@
+/*
+    * wish_utils.h
+    *
+    *  Archivo de encabezado que contiene las declaraciones de funciones y variables utilizadas en el programa principal
+*/
+
 #ifndef __WISH_U_H__
 #define __WISH_U_H__
 

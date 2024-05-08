@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include "wish_utils.h"
+#include <libgen.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -17,6 +18,19 @@ char error_message[30] = "An error has occurred\n";
 char history[HISTORY_SIZE][BUFFER_SIZE];
 int history_count = 0;
 
+/*
+    *Funcion que procesa un comando ingresado por el usuario
+    *
+    * Analiza el comando para determinar si es interno (cd, path, exit) o externo.
+    * Si el comando es interno, llama a la funcion correspondiente (execute_cd, execute_path, execute_exit).
+    * Si el comando es externo, crea un proceso hijo para ejecutar el comando.
+    * Ejecuta en sefundo plano los comandos que contienen el simbolo "&".
+    * 
+    * Recibe el comando ingresado por el usuario
+    * Recibe un puntero a mypath, que contiene la ruta de los comandos
+    * 
+    * No retorna nada.
+*/
 void procesar_comando(char *command, char ***mypath)
 {
     int num_com = 0;
@@ -54,7 +68,6 @@ void procesar_comando(char *command, char ***mypath)
             }
             token = strtok(NULL, "&");
         }
-
         char *all_commands[num_com + 1];
         char *command_copy2 = strdup(command);
         token = strtok(command_copy2, "&");
@@ -70,27 +83,22 @@ void procesar_comando(char *command, char ***mypath)
             token = strtok(NULL, "&");
         }
         all_commands[i] = NULL;
-
         pid_t pids[num_com];
-
         for (i = 0; i < num_com; i++)
         {
             char *s = all_commands[i];
             char *command_string = strtok_r(s, " ", &s);
-
             fd = -1;
             char ***mp_copy = malloc(2 * sizeof(char **));
             memcpy(mp_copy, mypath, 2 * sizeof(char **));
             char ***mp = mp_copy;
             char specificpath[MAX_SIZE];
-
             while ((strcmp((*mp)[0], "") != 0) && fd != 0)
             {
                 strcpy(specificpath, *(mp[0]++));
                 strncat(specificpath, command_string, strlen(command_string));
                 fd = access(specificpath, X_OK);
             }
-
             if (fd == 0)
             {
                 if ((pids[i] = fork()) < 0)
@@ -108,7 +116,6 @@ void procesar_comando(char *command, char ***mypath)
                         num_args++;
                         token = strtok(NULL, " ");
                     }
-
                     i = 1;
                     char *myargs[num_args + 1];
                     myargs[0] = strdup(command_string);
@@ -121,7 +128,6 @@ void procesar_comando(char *command, char ***mypath)
                         i++;
                     }
                     myargs[i] = NULL;
-
                     int i_found = 0, aux = 0;
                     i = 0;
                     do
@@ -135,10 +141,8 @@ void procesar_comando(char *command, char ***mypath)
                         {
                             aux = aux + 2;
                         }
-
                         i++;
                     } while (myargs[i] != NULL);
-
                     if (aux == 1)
                     {
                         if (myargs[i_found + 1] == NULL)
@@ -155,21 +159,33 @@ void procesar_comando(char *command, char ***mypath)
                             strcpy(file, myargs[i_found + 1]);
                             myargs[i_found] = NULL;
                             myargs[i_found + 1] = NULL;
-                            wish_launch_redirect(myargs, file);
+                            if (file != NULL)
+                            {
+                                myargs[0] = strdup(specificpath);
+                                wish_launch_redirect(myargs, file);
+                            }
+                            else
+                            {
+                                write(STDERR_FILENO, error_message, strlen(error_message));
+                            }
                         }
                     }
-
-                    execv(specificpath, myargs);
-                    printf("Error al ejecutar execvp\n");
+                    else if (aux > 1)
+                    {
+                        write(STDERR_FILENO, error_message, strlen(error_message));
+                    }
+                    else
+                    {
+                        execv(specificpath, myargs);
+                    }
                     exit(EXIT_FAILURE);
                 }
             }
             else
             {
-                printf("Command not found: %s\n\n", all_commands[i]);
+                write(STDERR_FILENO, error_message, strlen(error_message));
             }
         }
-
         int status;
         pid_t pid;
         for (i = 0; i < num_com; i++)
@@ -179,10 +195,19 @@ void procesar_comando(char *command, char ***mypath)
     }
     else
     {
-        printf("Comando incorrecto %s\n", command);
+        write(STDERR_FILENO, error_message, strlen(error_message));
     }
 }
 
+
+/*
+    *Funcion principal del programa
+    *
+    * Se encarga de leer los comandos ingresados por el usuario y ejecutarlos.
+    * Si se ingresa un archivo como argumento, lee los comandos del archivo y los ejecuta.
+    *  
+    * Retorna 0 si el programa se ejecuta correctamente
+*/
 int main(int argc, char *argv[])
 {
     char **mypath = malloc(2 * sizeof(char *));
@@ -216,10 +241,8 @@ int main(int argc, char *argv[])
                     strcpy(history[HISTORY_SIZE - 1], input_line);
                 }
             }
-
             input_line[strcspn(input_line, "\n")] = '\0';
             procesar_comando(input_line, &mypath);
-
         } while (1);
         free(input_line);
     }
@@ -227,20 +250,17 @@ int main(int argc, char *argv[])
     {
         char commands[MAX_COMMANDS][MAX_SIZE];
         int num_commands = 0;
-
         FILE *fp = fopen(argv[1], "r");
-        if (fp == NULL)
+        if (!fp)
         {
-            printf("Error opening file\n");
-            exit(1);
+            write(STDERR_FILENO, error_message, strlen(error_message));
+            return EXIT_FAILURE;
         }
-
         while (fgets(commands[num_commands], MAX_SIZE, fp))
         {
             num_commands++;
         }
         fclose(fp);
-
         for (int i = 0; i < num_commands; i++)
         {
             input_line = commands[i];
@@ -248,9 +268,10 @@ int main(int argc, char *argv[])
             procesar_comando(input_line, &mypath);
         }
     }
-    else if (argc > 1)
+    else if (argc > 2)
     {
         write(STDERR_FILENO, error_message, strlen(error_message));
+        return EXIT_FAILURE;
     }
 
     return 0;
