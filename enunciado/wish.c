@@ -155,18 +155,31 @@ void procesar_comando(char *command, char ***mypath)
                             strcpy(file, myargs[i_found + 1]);
                             myargs[i_found] = NULL;
                             myargs[i_found + 1] = NULL;
-                            wish_launch_redirect(myargs, file);
+                             if (file != NULL)
+                            {
+                                myargs[0] = strdup(specificpath);
+                                wish_launch_redirect(myargs, file);
+                            }
+                            else
+                            {
+                                write(STDERR_FILENO, error_message, strlen(error_message));
+                            }
                         }
                     }
-
-                    execv(specificpath, myargs);
-                    printf("Error al ejecutar execvp\n");
+                    else if (aux > 1)
+                    {
+                        write(STDERR_FILENO, error_message, strlen(error_message));
+                    }
+                    else
+                    {
+                        execv(specificpath, myargs);
+                    }
                     exit(EXIT_FAILURE);
                 }
             }
             else
             {
-                printf("Command not found: %s\n\n", all_commands[i]);
+                write(STDERR_FILENO, error_message, strlen(error_message));
             }
         }
 
@@ -179,7 +192,7 @@ void procesar_comando(char *command, char ***mypath)
     }
     else
     {
-        printf("Comando incorrecto %s\n", command);
+        write(STDERR_FILENO, error_message, strlen(error_message));
     }
 }
 
@@ -229,10 +242,10 @@ int main(int argc, char *argv[])
         int num_commands = 0;
 
         FILE *fp = fopen(argv[1], "r");
-        if (fp == NULL)
+        if (!fp)
         {
-            printf("Error opening file\n");
-            exit(1);
+            write(STDERR_FILENO, error_message, strlen(error_message));
+            return EXIT_FAILURE;
         }
 
         while (fgets(commands[num_commands], MAX_SIZE, fp))
@@ -248,9 +261,10 @@ int main(int argc, char *argv[])
             procesar_comando(input_line, &mypath);
         }
     }
-    else if (argc > 1)
+    else if (argc > 2)
     {
         write(STDERR_FILENO, error_message, strlen(error_message));
+        return EXIT_FAILURE;
     }
 
     return 0;
