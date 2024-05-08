@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "stat.h": "c",
+        "libgen.h": "c",
+        "history.h": "c"
+    }
+}

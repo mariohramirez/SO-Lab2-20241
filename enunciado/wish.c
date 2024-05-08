@@ -159,11 +159,7 @@ void procesar_comando(char *command, char ***mypath)
                             strcpy(file, myargs[i_found + 1]);
                             myargs[i_found] = NULL;
                             myargs[i_found + 1] = NULL;
-<<<<<<< HEAD
                             if (file != NULL)
-=======
-                             if (file != NULL)
->>>>>>> 9683ebd4f0af740acc7fae267221f23e3f45f957
                             {
                                 myargs[0] = strdup(specificpath);
                                 wish_launch_redirect(myargs, file);
